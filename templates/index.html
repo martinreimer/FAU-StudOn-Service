@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Folder System</title>
+</head>
+<body>
+    {% macro render_folder(folder) %}
+        <li>
+            {{ folder.path }}
+            {% if folder.courses %}
+                <ul>
+                    {% for course in folder.courses %}
+                        <li>
+                            {{ course.name }}: {{ course.description }}
+                            <a href="{{ course.link }}">Link</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            {% if folder.child_folders %}
+                <ul>
+                    {% for subfolder in folder.child_folders %}
+                        {{ render_folder(subfolder) }}
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </li>
+    {% endmacro %}
+
+    <ul>
+        {% for folder in folders %}
+            {{ render_folder(folder) }}
+        {% endfor %}
+    </ul>
+</body>
+</html>
