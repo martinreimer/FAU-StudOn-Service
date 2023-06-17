@@ -1,36 +1,274 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Folder System</title>
+    <meta charset="UTF-8">
+    <title>Course Notifier</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js" integrity="sha384-lSDsA4MkE5ZU5l13bfVAQ5zmMBmANpD7ForaZzlRwo18+r4FsWz7KK1LItJdpda7" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+
+   <style>
+    html, body {
+        height: 100%;
+        margin: 0;
+    }
+
+    .main-content {
+        min-height: calc(100vh - 60px); /* Subtracting the height of the navbar */
+        padding: 20px;
+    }
+
+    .footer {
+        clear: both;
+        background-color: #f8f9fa;
+        padding: 20px;
+    }
+
+    .toggle-icon {
+        cursor: pointer;
+        transition: transform 0.3s;
+    }
+    .toggle-icon.collapsed {
+        transform: rotate(-90deg);
+    }
+     /* The alert message box */
+    .alert {
+    padding: 20px;
+    background-color: #f44336; /* Red */
+    color: white;
+    margin-bottom: 15px;
+    }
+
+    /* The close button */
+    .closebtn {
+    margin-left: 15px;
+    color: white;
+    font-weight: bold;
+    float: right;
+    font-size: 22px;
+    line-height: 20px;
+    cursor: pointer;
+    transition: 0.3s;
+    }
+
+    /* When moving the mouse over the close button */
+    .closebtn:hover {
+    color: black;
+    } 
+
+    </style>
 </head>
 <body>
-    {% macro render_folder(folder) %}
-        <li>
-            {{ folder.path }}
-            {% if folder.courses %}
-                <ul>
-                    {% for course in folder.courses %}
-                        <li>
-                            {{ course.name }}: {{ course.description }}
-                            <a href="{{ course.link }}">Link</a>
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-            {% if folder.child_folders %}
-                <ul>
-                    {% for subfolder in folder.child_folders %}
-                        {{ render_folder(subfolder) }}
-                    {% endfor %}
-                </ul>
-            {% endif %}
-        </li>
-    {% endmacro %}
+<!-- Add this somewhere appropriate in your HTML, like the header -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{{ url_for('index') }}">FAU Course Notifier</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Services</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">About</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Contact</a>
+                </li>
+            </ul>
+            <ul class="navbar-nav mb-2 mb-lg-0">
+                {% if session['user_info'] %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+                    </li>
+                {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('login') }}">Login with Google</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
 
-    <ul>
-        {% for folder in folders %}
-            {{ render_folder(folder) }}
-        {% endfor %}
-    </ul>
+<div class="main-content">
+    <div class="alert">
+        <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
+        This is an alert box.
+    </div> 
+    
+    <!-- Your main content goes here (e.g. the course structure) -->
+    <div class="container mt-5">
+        <ul class="list-group">
+            {% macro render_folder(folder_name, folder_data, parent_id="") %}
+                {% set id = parent_id|string + "-" + folder_data.id|string %}
+                <li class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="toggle-icon collapsed" data-toggle="collapse" data-target="#{{ id }}">&#9654;</span>
+                            <span>{{ folder_name }}</span>
+                            
+                            {% if folder_data.is_subscribed %}
+                                <span class="bell-button unsubscribe" data-folder-id="{{ folder_data.id }}"><i class="fas fa-bell-slash"></i></span>
+                            {% else %}
+                                <span class="bell-button subscribe" data-folder-id="{{ folder_data.id }}"><i class="fas fa-bell"></i></span>
+                            {% endif %}
+                        </div>
+                    </div>
+                
+                {% if folder_data is mapping %}
+                <div id="{{ id }}" class="collapse">
+                    <ul>
+                        {% for subfolder_name, subfolder_data in folder_data.items() %}
+                            {% if subfolder_name not in ['id', 'is_subscribed', 'courses'] %}
+                                {{ render_folder(subfolder_name, subfolder_data, id) }}
+                            {% endif %}
+                        {% endfor %}
+                        {% if folder_data.courses %}
+                            {% for course in folder_data.courses %}
+                                <li><span>{{ course.name }}</span></li>
+                            {% endfor %}
+                        {% endif %}
+                    </ul>
+                </div>
+                {% endif %}
+            </li>
+            {% endmacro %}
+            
+            {% for folder_name, folder_data in folders.items() %}
+                {{ render_folder(folder_name, folder_data) }}
+            {% endfor %}    
+        </ul>
+    </div>
+</div>
+
+
+<footer class="bg-light text-center text-lg-start footer">
+    <div class="container p-4">
+        <div class="row">
+            <div class="col-lg-6 col-md-12 mb-4 mb-md-0">
+                <h5 class="text-uppercase">FAU Course Notifier</h5>
+                <p>
+                    Some text here to give the footer a purpose.
+                </p>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-4 mb-md-0">
+                <h5 class="text-uppercase">Links</h5>
+                <ul class="list-unstyled mb-0">
+                    <li>
+                        <a href="#!" class="text-dark">Link 1</a>
+                    </li>
+                    <li>
+                        <a href="#!" class="text-dark">Link 2</a>
+                    </li>
+                    <li>
+                        <a href="#!" class="text-dark">Link 3</a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="col-lg-3 col-md-6 mb-4 mb-md-0">
+                <h5 class="text-uppercase mb-0">Legal</h5>
+                <ul class="list-unstyled">
+                    <li>
+                        <a href="#!" class="text-dark">Datenschutzerklärung</a>
+                    </li>
+                    <li>
+                        <a href="#!" class="text-dark">Impressum</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center p-3" style="background-color: rgba(0, 0, 0, 0.2);">
+        © 2023 FAU Course Notifier
+    </div>
+</footer>
+
+<script>
+    $(document).ready(function() {
+        $('.toggle-icon').on('click', function() {
+            $(this).toggleClass('collapsed');
+        });
+    });
+    function showToast(message) {
+        var toastContainer = document.getElementById('toast-container');
+        var toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerHTML = message;
+
+        // Append toast to container
+        toastContainer.appendChild(toast);
+
+        // Make the toast visible
+        setTimeout(function() {
+            toast.style.opacity = 1;
+        }, 100);
+
+        // Hide and remove the toast after 3 seconds
+        setTimeout(function() {
+            toast.style.opacity = 0;
+            setTimeout(function() {
+                toastContainer.removeChild(toast);
+            }, 500);
+        }, 3000);
+    }
+
+
+
+    $(".bell-button").click(function() {
+        // Retrieve the data-path attribute
+        var folderId = $(this).attr('data-folder-id');            
+        var action = $(this).hasClass("subscribe") ? "subscribe" : "unsubscribe";
+        console.log(action + " " + folderId);         
+
+        if (folderId === null || folderId === '' || typeof folderId === 'undefined' 
+            || action === null || action === '' || typeof action === 'undefined') {
+            console.log('folderId or action is empty or null');
+        } else {            
+            $.ajax({
+                type: "POST",
+                url: "/" + action,
+                data: JSON.stringify({ folder_id: folderId }),
+                contentType: "application/json",
+                success: function(response) {
+                    // Check if the response status is success
+                    if (response.status === 'success') {
+                        // Optional: Display a success message
+                        alert("Subscribed successfully!");
+                        if ( action === "subscribe" ) {
+                            $(".bell-button[data-folder-id='" + folderId + "']").removeClass("subscribe").addClass("unsubscribe");
+                            $(".bell-button[data-folder-id='" + folderId + "'] i").removeClass("fa-bell").addClass("fa-bell-slash");
+                            showToast('Successfully subscribed!');
+                        } else {
+                            $(".bell-button[data-folder-id='" + folderId + "']").removeClass("unsubscribe").addClass("subscribe");
+                            $(".bell-button[data-folder-id='" + folderId + "'] i").removeClass("fa-bell-slash").addClass("fa-bell");
+                            showToast('Successfully unsubscribed!');
+                        }
+                        
+                    } else {
+                        // Optional: Display an error message
+                        alert("Failed to subscribe.");
+                    }
+                },
+                error: function() {
+                    // Optional: Display an error message
+                    alert("Failed to subscribe.");
+                }
+            });
+        }
+    });
+
+    
+
+
+</script>
+
 </body>
 </html>

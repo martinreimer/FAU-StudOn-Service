@@ -1,10 +1,16 @@
 #import
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.common.exceptions import TimeoutException
 import time
+import hashlib
 
+def calculate_hash(content):
+    # Using SHA-256 hash function
+    return hashlib.sha256(content).hexdigest()
 
-def extract_row_info(row):
+def extract_row_info(driver, row):
     '''
     Extracts the information from a row element
     :param row: the row element
@@ -12,83 +18,61 @@ def extract_row_info(row):
     '''
     # Find the container div with class="il_ContainerItemTitle form-inline"
     container_element = row.find_element(By.CLASS_NAME, "il_ContainerItemTitle.form-inline")
-    
     # Find the item name within the <h3> element
     h3_element = container_element.find_element(By.TAG_NAME, "h3")
     item_name = h3_element.text
 
-    # Check if item is normal
-    if item_name == None or item_name == "":
-        return None
-    
     # Find the item link
     try:
-        a_element = h3_element.find_element(By.TAG_NAME, "a")
-        item_link = a_element.get_attribute("href")
+        item_link = h3_element.find_element(By.TAG_NAME, "a").get_attribute("href")
     except:
         item_link = None
 
+    # Check if item is normal && Check if item is a file to download, if so, skip
+    if (item_name == None or item_name == "") or (item_link is not None and item_link.endswith("download.html")):
+        print("Error in item name")
+        return None
+    
+    '''
     # Find the item description
     try:
-        description_element = row.find_element(By.CLASS_NAME, "il_Description")
-        description = description_element.text
+        description = row.find_element(By.CLASS_NAME, "il_Description").text
     except:
         description = None
-
-    # Find the item details
-    try:
-        properties_element = row.find_element(By.CLASS_NAME, "il_ItemProperties")
-        details_element = properties_element.find_element(By.TAG_NAME, "span")
-        details = details_element.text
-        
-    except:
-        details = None
-
-    # Check if item is a file to download, if so, skip
-    if item_link is not None and item_link.endswith("download.html"):
-        return None
-
-        # Find the container div with class="il_ContainerItemTitle form-inline"
-    container_element = row.find_element(By.CLASS_NAME, "il_ContainerItemTitle.form-inline")
-    
-    # Find the item name within the <h3> element
-    h3_element = container_element.find_element(By.TAG_NAME, "h3")
-    item_name = h3_element.text
+    '''
 
     # Check if item is a folder by checking the icon
-    joinable = False
-    is_folder = False
+    joinable, is_folder, is_course = False, False, False
     try:
-        icon_element = row.find_element(By.CLASS_NAME, "ilContainerListItemIcon")
-        icon_img_element = icon_element.find_element(By.TAG_NAME, "img")
-        is_folder = "icon_cat.svg" in icon_img_element.get_attribute("src")
+        img_alt = row.find_element(By.CLASS_NAME, "ilContainerListItemIcon").find_element(By.TAG_NAME, "img").get_attribute("alt")
+        is_folder = "Kategorie" == img_alt
+        if not is_folder:
+            is_course = "Kurs" == img_alt
     except:
         print("Error in icon")
 
-    # check if item is not folder to skip rest
-    if False:#not is_folder:
-        # Check if item is link, if so, skip
-        if "icon_webr.svg" in icon_img_element.get_attribute("src"):
-            return None
-
+    # check if item is a course to skip rest
+    if False:
         # Find the button and perform a click
         btn_group = row.find_element(By.CLASS_NAME, "btn-group")
         button = btn_group.find_element(By.TAG_NAME, "button")
-
         button.click()
 
-        # Sleep for 5 seconds to allow the dropdown menu to load
-        time.sleep(0.3)
+        # Wait for the dropdown menu to load
+        try:
+            dropdown_menu = WebDriverWait(btn_group, 5).until(EC.visibility_of_element_located((By.CLASS_NAME, "dropdown-menu")))
+            #dropdown_menu = wait.until(EC.visibility_of_element_located((By.CLASS_NAME, "dropdown-menu")))
+        except TimeoutException:
+            # Handle timeout exception if the element doesn't appear within the specified time
+            print("Dropdown menu did not appear within the timeout period")
 
         # Check if there is an <a> element with the text "Beitreten"
-        dropdown_menu = btn_group.find_element(By.CLASS_NAME, "dropdown-menu")
         a_elements = dropdown_menu.find_elements(By.TAG_NAME, "a")
 
-
         for a_element in a_elements:
-            if "Beitreten" in a_element.text or "Kursmitgliedschaft beenden" in a_element.text:
+            if "Beitreten" == a_element.text or "Kursmitgliedschaft beenden" == a_element.text:
                 joinable = True
-            elif "Zu Favoriten hinzufügen" in a_element.text:
+            elif "Zu Favoriten hinzufügen" == a_element.text:
                 is_folder = True
 
         # Perform another click on the button to close the collapsible
@@ -97,7 +81,6 @@ def extract_row_info(row):
     # Store the item information in the dictionary
     item_info = {
         "item_name": item_name,
-        "description": description,
         "item_link": item_link,
         "joinable": joinable,
         "is_folder": is_folder
@@ -105,7 +88,7 @@ def extract_row_info(row):
     return item_info
 
 
-def extract_tile_info(tile_row):
+def extract_tile_info(driver, tile_row):
     '''
     Extracts the information from a tile element
     :param tile_row: the tile element
@@ -119,31 +102,34 @@ def extract_tile_info(tile_row):
     item_name = a_element.text
     item_link = a_element.get_attribute("href")
     
-    # Check if item is normal
-    if item_name == None or item_name == "":
+    # Check if item is normal && Check if item is a file to download, if so, skip
+    if (item_name == None or item_name == "") or (item_link is not None and item_link.endswith("download.html")):
         return None
     
+    ''''
     # Extract item description
     caption_elements = card_element.find_elements(By.CLASS_NAME, "caption")
     description = caption_elements[1].text if len(caption_elements) > 1 else None  # Assuming the description is always the second caption
-    
+    '''
+
     # Check if item is a file to download, if so, skip
     if item_link is not None and item_link.endswith("download.html"):
         return None
     
     # Check if item is a folder by checking the icon
-    joinable = False
-    is_folder = False
-
-    icon_element = card_element.find_element(By.CLASS_NAME, "il-card-repository-head")
-    icon_img_element = icon_element.find_element(By.TAG_NAME, "img")
-    is_folder = "icon_cat.svg" in icon_img_element.get_attribute("src")
+    joinable, is_folder, is_course = False, False, False
+    try:
+        icon_element = card_element.find_element(By.CLASS_NAME, "il-card-repository-head")
+        img_alt = icon_element.find_element(By.TAG_NAME, "img").get_attribute("alt")
+        is_folder = "Kategorie" == img_alt
+        if not is_folder:
+            is_course = "Kurs" == img_alt
+    except:
+        print("Error in icon")
 
     # check if item is not folder to skip rest
-    if False:#not is_folder:
-        # Check if item is link, if so, skip
-        if "icon_webr.svg" in icon_img_element.get_attribute("src"):
-            return None
+    if False:
+
         # Find the dropdown button
         dropdown_button = card_element.find_element(By.CLASS_NAME, "btn.btn-default.dropdown-toggle")
         dropdown_button.click()
@@ -152,13 +138,20 @@ def extract_tile_info(tile_row):
         time.sleep(0.3)
 
         # Check if there are any actions related to joining
-        dropdown_menu = card_element.find_element(By.CLASS_NAME, "dropdown-menu")
-        btn_elements = dropdown_menu.find_elements(By.TAG_NAME, "button")
+        # Wait for the dropdown menu to load
+        try:
+            dropdown_menu = WebDriverWait(card_element, 5).until(EC.visibility_of_element_located((By.CLASS_NAME, "dropdown-menu")))
+            #dropdown_menu = wait.until(EC.visibility_of_element_located((By.CLASS_NAME, "dropdown-menu")))
+        except TimeoutException:
+            # Handle timeout exception if the element doesn't appear within the specified time
+            print("Dropdown menu did not appear within the timeout period")
 
+
+        btn_elements = dropdown_menu.find_elements(By.TAG_NAME, "button")
         for btn_element in btn_elements:
-            if "Beitreten" in btn_element.text or "Kursmitgliedschaft beenden" in btn_element.text:
+            if "Beitreten" == btn_element.text or "Kursmitgliedschaft beenden" == btn_element.text:
                 joinable = True
-            elif "Zu Favoriten hinzufügen" in btn_element.text:
+            elif "Zu Favoriten hinzufügen" == btn_element.text:
                 is_folder = True
         
         # Perform another click on the button to close the dropdown menu
@@ -167,13 +160,18 @@ def extract_tile_info(tile_row):
     # Store the item information in the dictionary
     item_info = {
         "item_name": item_name,
-        "description": description,
         "item_link": item_link,
         "joinable": joinable,
         "is_folder": is_folder
     }
 
     return item_info
+
+def get_hash_of_page(driver):
+    # Calculate hash of the page: mainscrolldiv contains all item information
+    main_page_part = driver.find_element(By.CLASS_NAME, "ilTabsContentOuter")
+    page_hash_value = calculate_hash(main_page_part.text.encode('utf-8'))
+    return page_hash_value
 
 
 def scrap_page(driver, url, print_info=False):
@@ -188,7 +186,7 @@ def scrap_page(driver, url, print_info=False):
     driver.get(url)
 
     # Wait for the page to load completely (modify the timeout as needed)
-    driver.implicitly_wait(2)
+    #driver.implicitly_wait(1)
 
     # Initialize a dictionary to store items information
     items = {}
@@ -207,7 +205,7 @@ def scrap_page(driver, url, print_info=False):
         if rows:  
             for row in rows:
                 try:
-                    item_info = extract_row_info(row)
+                    item_info = extract_row_info(driver, row)
                     if item_info is not None:
                         items[item_info['item_name']] = item_info
                 except:
@@ -221,7 +219,7 @@ def scrap_page(driver, url, print_info=False):
             tile_rows = container.find_elements(By.CLASS_NAME, "col-xs-12.col-sm-6.col-md-4.col-lg-3")
             for tile_row in tile_rows:
                 try:
-                    item_info = extract_tile_info(tile_row)
+                    item_info = extract_tile_info(driver, tile_row)
                     if item_info is not None:
                         items[item_info['item_name']] = item_info
                 except:
@@ -232,7 +230,6 @@ def scrap_page(driver, url, print_info=False):
         # Print the extracted item information
         for item_name, item_info in items.items():
             print("item Name:", item_name)
-            print("Description:", item_info["description"])
             print("Joinable:", str(item_info["joinable"]))
             print("Folder:", str(item_info["is_folder"]))
             print("----")

@@ -6,7 +6,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
-from page_scraper import scrap_page
+from page_scraper import scrap_page, get_hash_of_page
 from login import login
 from pymongo import MongoClient
 import config 
@@ -61,19 +61,22 @@ client = MongoClient(config.MONGODB_URI, config.MONGODB_PORT)
 db = client[config.MONGODB_DB]
 
 # Select the collection within the database
-folders_collection = db[config.MONGODB_COLLECTION]
+folders_collection = db[config.MONGODB_COLLECTION_FOLDERS]
 
 
-def crawl_website(driver, url, path="root/"):
+def crawl_website(driver, url, path="root//"):
     print(f"Processing {path}")
     # Check if url starts with https://www.studon.fau.de/
-    if not url.startswith(config.BASE_URL) or url is None:
+    if url is None or not url.startswith(config.BASE_URL):
         return None
 
     items = scrap_page(driver, url)
+
+    hash = get_hash_of_page(driver=driver)
     # Object to store folder data
     folder = {
         "path": path,
+        "hash": hash,
         "courses": [],
         "child_folders": []
     }
@@ -82,19 +85,18 @@ def crawl_website(driver, url, path="root/"):
     for _, item_info in items.items():
         if item_info['is_folder']:
             # Ignore for now faculty folders not from technical faculty
-            if path == "root/" and item_info['item_name'] != "5. Technische Fakultät":
+            if path == "root//" and item_info['item_name'] != "5. Technische Fakultät":
                 continue
             # Check if this is a relevant folder (current or next semester)
             if is_desired_folder_name(item_info['item_name']):
                 # We need to go deeper into this folder
-                sub_folder_id = crawl_website(driver, item_info['item_link'], path + item_info['item_name'] + "/")
+                sub_folder_id = crawl_website(driver, item_info['item_link'], path + item_info['item_name'] + "//")
                 # Add the ObjectId of the sub-folder to the current folder
                 folder['child_folders'].append(sub_folder_id)
         else:
             # This is a course, add it to the courses list in the folder object
             folder['courses'].append({
                 "name": item_info['item_name'],
-                "description": item_info['description'],
                 "link": item_info['item_link'],
                 "joinable": item_info['joinable']
             })
@@ -104,9 +106,11 @@ def crawl_website(driver, url, path="root/"):
     return result.inserted_id
 
 
-def main():
+def main(is_headless=True):
     #Init Selenium
     options = Options()
+    if is_headless:
+        options.add_argument("--headless")
     driver = webdriver.Chrome(options=options)
 
     # Maximize the browser window
