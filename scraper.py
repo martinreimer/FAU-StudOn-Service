@@ -4,11 +4,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import TimeoutException
 import time
-import hashlib
-
-def calculate_hash(content):
-    # Using SHA-256 hash function
-    return hashlib.sha256(content).hexdigest()
 
 def extract_row_info(driver, row):
     '''
@@ -30,16 +25,12 @@ def extract_row_info(driver, row):
 
     # Check if item is normal && Check if item is a file to download, if so, skip
     if (item_name == None or item_name == "") or (item_link is not None and item_link.endswith("download.html")):
-        print("Error in item name")
-        return None
-    
-    '''
-    # Find the item description
-    try:
-        description = row.find_element(By.CLASS_NAME, "il_Description").text
-    except:
-        description = None
-    '''
+        return {
+        "item_name": item_name,
+        "item_link": None,
+        "joinable": False,
+        "is_folder": False
+    }
 
     # Check if item is a folder by checking the icon
     joinable, is_folder, is_course = False, False, False
@@ -52,7 +43,7 @@ def extract_row_info(driver, row):
         print("Error in icon")
 
     # check if item is a course to skip rest
-    if False:
+    if is_course:
         # Find the button and perform a click
         btn_group = row.find_element(By.CLASS_NAME, "btn-group")
         button = btn_group.find_element(By.TAG_NAME, "button")
@@ -104,17 +95,13 @@ def extract_tile_info(driver, tile_row):
     
     # Check if item is normal && Check if item is a file to download, if so, skip
     if (item_name == None or item_name == "") or (item_link is not None and item_link.endswith("download.html")):
-        return None
-    
-    ''''
-    # Extract item description
-    caption_elements = card_element.find_elements(By.CLASS_NAME, "caption")
-    description = caption_elements[1].text if len(caption_elements) > 1 else None  # Assuming the description is always the second caption
-    '''
+        return {
+        "item_name": item_name,
+        "item_link": None,
+        "joinable": False,
+        "is_folder": False
+    }
 
-    # Check if item is a file to download, if so, skip
-    if item_link is not None and item_link.endswith("download.html"):
-        return None
     
     # Check if item is a folder by checking the icon
     joinable, is_folder, is_course = False, False, False
@@ -128,7 +115,7 @@ def extract_tile_info(driver, tile_row):
         print("Error in icon")
 
     # check if item is not folder to skip rest
-    if False:
+    if is_course:
 
         # Find the dropdown button
         dropdown_button = card_element.find_element(By.CLASS_NAME, "btn.btn-default.dropdown-toggle")
@@ -167,14 +154,8 @@ def extract_tile_info(driver, tile_row):
 
     return item_info
 
-def get_hash_of_page(driver):
-    # Calculate hash of the page: mainscrolldiv contains all item information
-    main_page_part = driver.find_element(By.CLASS_NAME, "ilTabsContentOuter")
-    page_hash_value = calculate_hash(main_page_part.text.encode('utf-8'))
-    return page_hash_value
 
-
-def scrap_page(driver, url, print_info=False):
+def page_scrap(driver, url, print_info=False):
     '''
     Scrapes the page for items information
     :param driver: the selenium driver

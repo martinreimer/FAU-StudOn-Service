@@ -23,3 +23,31 @@ Data Structure:
         ObjectId("folder3")
     ]
 }
+
+# Set Up
+
+1. sudo systemctl start mongod
+2. mongosh
+
+use university_courses
+find: db.folders.find({ "path": "root//5. Technische Fakultät//5.1 CBI//" })
+deleteall: db.folders.deleteMany({})
+
+
+# Idee
+
+## Course Notifier Service
+- Nutzer melden sich an über Google
+- zu erst einmal nur TechFak
+- ein mal tägliches scraping und anschließender Mail-Versand
+- Benachrichtigung
+    - wenn neuer Kurs/PDF/Ordner hinzugefügt oder wenn Kurseintritt möglich
+    - über Einstellungen konfigurierbar   
+
+
+## Local-hosted Scraper
+- paste in links to folder you want to scrap items and subfolders
+
+## Use-Cases
+- get notified for new courses and joinable courses
+- search easily for courses

@@ -33,30 +33,28 @@
     .toggle-icon.collapsed {
         transform: rotate(-90deg);
     }
-     /* The alert message box */
-    .alert {
-    padding: 20px;
-    background-color: #f44336; /* Red */
-    color: white;
-    margin-bottom: 15px;
-    }
 
     /* The close button */
     .closebtn {
-    margin-left: 15px;
-    color: white;
-    font-weight: bold;
-    float: right;
-    font-size: 22px;
-    line-height: 20px;
-    cursor: pointer;
-    transition: 0.3s;
+        margin-left: 15px;
+        color: white;
+        font-weight: bold;
+        float: right;
+        font-size: 22px;
+        line-height: 20px;
+        cursor: pointer;
+        transition: 0.3s;
     }
 
     /* When moving the mouse over the close button */
     .closebtn:hover {
-    color: black;
+        color: black;
     } 
+
+    /* Bell button */
+    .unsubscribe{
+        color: lightgreen
+    }
 
     </style>
 </head>
@@ -95,12 +93,7 @@
     </div>
 </nav>
 
-<div class="main-content">
-    <div class="alert">
-        <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span>
-        This is an alert box.
-    </div> 
-    
+<div class="main-content">    
     <!-- Your main content goes here (e.g. the course structure) -->
     <div class="container mt-5">
         <ul class="list-group">
@@ -120,23 +113,17 @@
                         </div>
                     </div>
                 
-                {% if folder_data is mapping %}
-                <div id="{{ id }}" class="collapse">
-                    <ul>
-                        {% for subfolder_name, subfolder_data in folder_data.items() %}
-                            {% if subfolder_name not in ['id', 'is_subscribed', 'courses'] %}
-                                {{ render_folder(subfolder_name, subfolder_data, id) }}
-                            {% endif %}
-                        {% endfor %}
-                        {% if folder_data.courses %}
-                            {% for course in folder_data.courses %}
-                                <li><span>{{ course.name }}</span></li>
-                            {% endfor %}
-                        {% endif %}
-                    </ul>
-                </div>
-                {% endif %}
-            </li>
+                    <div id="{{ id }}" class="collapse">
+                        <ul>
+                            {% if folder_data is mapping %}
+                                {% for subfolder_name, subfolder_data in folder_data.items() if subfolder_name not in ['id', 'is_subscribed', 'items'] %}
+                                    {{ render_folder(subfolder_name, subfolder_data, id) }}
+                                {% endfor %}
+                                
+                            {% endif %}  
+                        </ul>
+                    </div>
+                </li>
             {% endmacro %}
             
             {% for folder_name, folder_data in folders.items() %}
@@ -145,6 +132,7 @@
         </ul>
     </div>
 </div>
+
 
 
 <footer class="bg-light text-center text-lg-start footer">
@@ -241,15 +229,14 @@
                     // Check if the response status is success
                     if (response.status === 'success') {
                         // Optional: Display a success message
-                        alert("Subscribed successfully!");
                         if ( action === "subscribe" ) {
                             $(".bell-button[data-folder-id='" + folderId + "']").removeClass("subscribe").addClass("unsubscribe");
                             $(".bell-button[data-folder-id='" + folderId + "'] i").removeClass("fa-bell").addClass("fa-bell-slash");
-                            showToast('Successfully subscribed!');
+                            alert("Subscribed successfully!");
                         } else {
                             $(".bell-button[data-folder-id='" + folderId + "']").removeClass("unsubscribe").addClass("subscribe");
                             $(".bell-button[data-folder-id='" + folderId + "'] i").removeClass("fa-bell-slash").addClass("fa-bell");
-                            showToast('Successfully unsubscribed!');
+                            alert("Unsubscribed successfully!");
                         }
                         
                     } else {

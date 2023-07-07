@@ -3,6 +3,7 @@ from pymongo import MongoClient
 from flask_oauthlib.client import OAuth
 import datetime
 import config
+import json
 
 
 app = Flask(__name__)
@@ -64,7 +65,6 @@ def authorized():
     return redirect(url_for('index'))
 
 
-
 @google.tokengetter
 def get_google_oauth_token():
     return session.get('google_token')
@@ -75,7 +75,7 @@ def get_google_oauth_token():
 # Connect to MongoDB
 client = MongoClient(config.MONGODB_URI, config.MONGODB_PORT)
 db = client[config.MONGODB_DB]
-folders_collection = db[config.MONGODB_COLLECTION_FOLDERS]
+folders_collection =  db["" + config.MONGODB_COLLECTION_FOLDERS] 
 users_collection = db[config.MONGODB_COLLECTION_USERS]
 subscriptions_collection = db[config.MONGODB_COLLECTION_SUBSCRIPTIONS]
 logs_collection = db[config.MONGODB_COLLECTION_LOGS]
@@ -110,6 +110,7 @@ def index():
     folder_documents = list(folders_collection.find({}))
     
     # Building hierarchical data structure
+    skip_root_folder = True
     folder_structure = {}
     for doc in folder_documents:
         # Merge nested dictionaries
@@ -122,25 +123,33 @@ def index():
             return d1
         
         # Check if the path is in the user's subscriptions
-        print(subscribed_paths)
+        #print(subscribed_paths)
         doc_id = str(doc['_id'])
         is_subscribed = doc_id in subscribed_paths
-        print(f"doc['_id']: doc_id, is_subscribed: {is_subscribed}")
+        #print(f"doc['_id']: doc_id, is_subscribed: {is_subscribed}")
         # Parts of the path
         parts = doc['path'].split('//')[1:]  # Use '//' as a separator
-
+        # Skip the root folder
+        if skip_root_folder:
+            if len(parts) == 1 and parts[0] == '':  # this is a super-folder
+                continue
         # Extra data to be added
         extra_data = {"id": doc_id, "is_subscribed": is_subscribed}
         
+        if doc_id =="64a7ee35492144b26091666f":
+            print("doc_id: ", doc_id)
+            print("doc: ", doc)
+            print("parts: ", parts)
         # Build structure
-        folder_structure = merge(folder_structure, build_structure(parts, {"courses": doc['courses']}, extra_data))
-    import json
+        folder_structure = merge(folder_structure, build_structure(parts, {"items": doc['items']}, extra_data))
+
     with open("folder_structure.json", "w") as outfile:
         json.dump(folder_structure, outfile)
 
 
     # Render the hierarchical structure using template
     return render_template('index.html', folders=folder_structure)
+
 
 
 @app.route('/subscribe', methods=['POST'])
