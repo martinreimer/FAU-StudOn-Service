@@ -151,7 +151,7 @@ def insert_folder(folder):
     '''
     # Insert the current folder into MongoDB 
     result = FOLDERS_COLLECTION.insert_one(folder)
-    inserted_id = result
+    inserted_id = result.inserted_id
     return inserted_id
 
 # endregion
@@ -193,6 +193,7 @@ def initial_crawl(driver, url, folder_path="root//", is_demo_mode=False):
         inserted_id = insert_folder(folder)
         if inserted_id == None:
             print("Error inserting folder")
+    else: inserted_id = None
 
 
     # Process its sub-folders via recursion
@@ -256,6 +257,9 @@ def incremental_crawl(driver, url, folder_path="root//", is_demo_mode=False):
     # Check if url starts with https://www.studon.fau.de/
     if url is None or not url.startswith(config.BASE_URL):
         return None
+    
+    # Init inserted_id
+    inserted_id = None
 
     # Get the hash of the current folder
     hash = get_hash_of_page(driver=driver)
