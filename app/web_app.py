@@ -80,7 +80,7 @@ users_collection = db[config.MONGODB_COLLECTION_USERS]
 subscriptions_collection = db[config.MONGODB_COLLECTION_SUBSCRIPTIONS]
 logs_collection = db[config.MONGODB_COLLECTION_LOGS]
 
-def build_structure(parts, data, extra_data=None):
+def build_structure(parts, data=None, extra_data=None):
     if not parts:
         # Merge courses with additional data if provided
         if extra_data is not None:
@@ -136,12 +136,18 @@ def index():
         # Extra data to be added
         extra_data = {"id": doc_id, "is_subscribed": is_subscribed}
         
-        if doc_id =="64a7ee35492144b26091666f":
-            print("doc_id: ", doc_id)
-            print("doc: ", doc)
-            print("parts: ", parts)
+        # Only include items that are not folders
+        print('-'*20)
+        courses = {}
+        if doc['items'] != {}:   
+            for item in doc['items']:
+                if doc['items'][item]['is_folder'] == False:
+                    courses[item] = doc['items'][item]
+                #if not item[list(item.keys())[0]]['is_folder']:
+        
+
         # Build structure
-        folder_structure = merge(folder_structure, build_structure(parts, {"items": doc['items']}, extra_data))
+        folder_structure = merge(folder_structure, build_structure(parts, {"Courses": courses}, extra_data))
 
     with open("folder_structure.json", "w") as outfile:
         json.dump(folder_structure, outfile)

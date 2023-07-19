@@ -266,10 +266,20 @@ def incremental_crawl(driver, url, folder_path="root//", is_demo_mode=False):
 
     # Get the old folder from the database
     old_folder = FOLDERS_COLLECTION.find_one({"path": folder_path})
+    
+    folder = old_folder.copy()
 
+    # Get all items that are sub-folders
+    non_folder_items = {k: v for k, v in old_folder["items"].items() if not v['is_folder']}    
+
+    print(f"Is old folder None? {old_folder is None}")
+    print(f"Is non_folder_items empty? {len(non_folder_items) == 0}")
+    print(f"Is hash the same? {old_folder.get('hash') == hash}")
+    print(f"Old folder hash: {old_folder.get('hash')}")
+    print(f"New folder hash: {hash}")
     # If the folder is the database and it doesnt contains items (courses), we can use compare the hash of the page with the one in the database
     # If the hash is the same, folder stayed the same, we can skip scraping this page & reuse items from the database
-    if old_folder is not None and len(old_folder['items']) == 0 and old_folder.get('hash') == hash:
+    if old_folder is not None and len(non_folder_items) == 0 and old_folder.get('hash') == hash:
         new_items = old_folder['items']
     else:
         new_items = page_scrap(driver, url)
@@ -289,7 +299,7 @@ def incremental_crawl(driver, url, folder_path="root//", is_demo_mode=False):
             # Update the document in the collection
             # If this is a demo run, don't do db operations 
             if not is_demo_mode:
-                FOLDERS_COLLECTION.update_one({"_id": old_folder['_id']}, new_values)
+                result = FOLDERS_COLLECTION.update_one({"_id": old_folder['_id']}, new_values)
                 # Check if the update was successful
                 if result.modified_count != 1: 
                     print("Error updating folder")
@@ -320,7 +330,7 @@ def incremental_crawl(driver, url, folder_path="root//", is_demo_mode=False):
             # folder path of subfolder
             sub_folders_path = folder_path + item_info['item_name'] + "//"
             # Recursively crawl the sub-folder  
-            sub_folder_id = initial_crawl(driver=driver, url=item_info['item_link'], folder_path=sub_folders_path, is_demo_mode=is_demo_mode)
+            sub_folder_id = incremental_crawl(driver=driver, url=item_info['item_link'], folder_path=sub_folders_path, is_demo_mode=is_demo_mode)
             # Add the ObjectId of the sub-folder to the current folder
             folder['child_folders'].append(sub_folder_id)
     # If this is a demo run, don't do db operations
@@ -338,59 +348,3 @@ def incremental_crawl(driver, url, folder_path="root//", is_demo_mode=False):
     return inserted_id
 
 # endregion
-
-def main(crawl_type : str, is_debug_mode : bool, is_headless : bool, is_demo_mode : bool):
-    '''
-    Main function
-    :param crawl_type: the type of crawl to perform (initial or incremental)
-    :param is_debug_mode: whether to enable debug mode
-    :param is_headless: whether to enable headless mode (no browser window))
-    :param is_demo_mode: whether to enable demo mode (no db operations)
-    :return: None
-    '''
-    #Init default arguments
-
-    options = Options()
-
-    # Set headless mode
-    if is_headless:
-        # headless mode operations
-        options.add_argument("--headless")
-
-    # Init Selenium
-    driver = webdriver.Chrome(options=options)
-    driver.maximize_window()
-
-    # Login to StudOn
-    print("StudOn Login ...")
-    login(driver=driver)
-    print("Successfully logged in to StudOn")
-
-    if crawl_type == 'initial':
-        # initial_crawl function
-        print("Initial Crawling...")
-        _ = initial_crawl(driver=driver, url=config.START_PAGE_URL, is_demo_mode=is_demo_mode)
-    elif crawl_type == 'incremental':
-        # incremental_crawl function
-        print("Incremental Crawling...")
-        _ = incremental_crawl(driver=driver, url=config.START_PAGE_URL, is_demo_mode=is_demo_mode)
-
-
-
-if __name__ == '__main__':
-    """
-    Main function
-    initial run: python crawler.py initial --debug --headless --demo
-    incremental run: python crawler.py initial --debug --headless --demo
-
-    """
-    parser = argparse.ArgumentParser(description='Web Crawling Script')
-    
-    parser.add_argument('crawl_type', choices=['initial', 'incremental'], help='Type of crawl to perform')
-    parser.add_argument('--debug', dest='is_debug_mode', action='store_true', help='Enable debug mode')
-    parser.add_argument('--headless', dest='is_headless', action='store_true', help='Enable headless mode')
-    parser.add_argument('--demo', dest='is_demo_mode', action='store_true', help='Enable demo mode')
-
-    args = parser.parse_args()
-
-    main(args.crawl_type, args.is_debug_mode, args.is_headless, args.is_demo_mode)
