@@ -128,7 +128,10 @@ def index():
         is_subscribed = doc_id in subscribed_paths
         #print(f"doc['_id']: doc_id, is_subscribed: {is_subscribed}")
         # Parts of the path
-        parts = doc['path'].split('//')[1:]  # Use '//' as a separator
+        if type(doc['path']) == list:
+            parts = doc['path'][0].split('//')[1:]  # Use '//' as a separator
+        else:
+            parts = doc['path'].split('//')[1:]  # Use '//' as a separator
         # Skip the root folder
         if skip_root_folder:
             if len(parts) == 1 and parts[0] == '':  # this is a super-folder
@@ -137,7 +140,6 @@ def index():
         extra_data = {"id": doc_id, "is_subscribed": is_subscribed}
         
         # Only include items that are not folders
-        print('-'*20)
         courses = {}
         if doc['items'] != {}:   
             for item in doc['items']:

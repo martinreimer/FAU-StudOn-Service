@@ -36,7 +36,7 @@ def main(crawl_type : str, is_headless : bool = True, is_demo_mode : bool = Fals
     if crawl_type == 'initial':
         # initial_crawl function
         print("Initial Crawling...")
-        _ = initial_crawl(driver=driver, url=config.START_PAGE_URL, is_demo_mode=is_demo_mode)
+        _ = initial_crawl(driver=driver, url=config.START_PAGE_URL, folder_path=config.TO_BE_PROCESSED_FOLDERS, is_demo_mode=is_demo_mode)
     elif crawl_type == 'incremental':
         # incremental_crawl function
         print("Incremental Crawling...")

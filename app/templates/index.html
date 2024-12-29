@@ -244,7 +244,7 @@
     <!-- Add this somewhere appropriate in your HTML, like the header -->
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container-fluid">
-            <a class="navbar-brand" href="{{ url_for('index') }}">FAU Course Notifier</a>
+            <a class="navbar-brand" href="{{ url_for('index') }}">FAU StudOn Companion</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -264,14 +264,14 @@
                 <ul class="navbar-nav mb-2 mb-lg-0">
                     {% if session['user_info'] %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+                      <a class="nav-link logout-button" href="{{ url_for('logout') }}">Logout</a>
                     </li>
                     {% else %}
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('login') }}">Login with Google</a>
+                      <a class="nav-link login-button" href="{{ url_for('login') }}">Login with Google</a>
                     </li>
                     {% endif %}
-                </ul>
+                  </ul>                  
             </div>
         </div>
     </nav>
@@ -392,21 +392,6 @@
                             {% endif %}
                             <!-- Folder Name -->
                             <span class="folder-name">{{ folder_name }}</span>
-                            {% if folder_data.item_link %}
-                            <!-- Add an HTML anchor tag with the item_link as href -->
-                            {% if folder_data.joinable %}
-                            <!-- Joinable Folder Item -->
-                            &nbsp;&nbsp;
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                                class="bi bi-box-arrow-in-right" viewBox="0 0 16 16">
-                                <path fill-rule="evenodd"
-                                    d="M6 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 0-1 0v2A1.5 1.5 0 0 0 6.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-8A1.5 1.5 0 0 0 5 3.5v2a.5.5 0 0 0 1 0v-2z" />
-                                <path fill-rule="evenodd"
-                                    d="M11.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H1.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z" />
-                            </svg>
-                            <a href="{{ folder_data.item_link }}" target="_blank">Join</a>
-                            {% endif %}
-                            {% endif %}
                         </div>
                     </div>
 
@@ -414,11 +399,10 @@
                         {% if folder_data.is_folder is not defined or folder_data.is_folder %}
                         <ul>
                             {% if folder_data is mapping %}
-                            {% for subfolder_name, subfolder_data in folder_data.items() if subfolder_name not in ['id',
-                            'is_subscribed', 'items', 'Courses'] %}
-                            <!-- Recursive Call for Subfolders -->
-                            {{ render_folder(subfolder_name, subfolder_data, id) }}
-                            {% endfor %}
+                                {% for subfolder_name, subfolder_data in folder_data.items() if subfolder_name not in ['id', 'is_subscribed', 'items', 'Courses'] %}
+                                    <!-- Recursive Call for Subfolders -->
+                                    {{ render_folder(subfolder_name, subfolder_data, id) }}
+                                {% endfor %}
                             {% endif %}
 
                             <!-- Display Courses in Folder -->
@@ -426,23 +410,23 @@
                             <li class="list-group-item">
                                 <b>Courses</b><br />
                                 {% for id in folder_data.Courses %}
-                                <!-- Course Item -->
-                                <span class="folder-name">{{ folder_data.Courses[id].item_name }}</span>
-                                {% if folder_data.Courses[id].item_link %}
-                                <!-- Add an HTML anchor tag with the item_link as href -->
-                                {% if folder_data.Courses[id].joinable %}
-                                <!-- Joinable Course Item -->
-                                &nbsp;&nbsp;
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                                    class="bi bi-box-arrow-in-right" viewBox="0 0 16 16">
-                                    <path fill-rule="evenodd"
-                                        d="M6 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 0-1 0v2A1.5 1.5 0 0 0 6.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-8A1.5 1.5 0 0 0 5 3.5v2a.5.5 0 0 0 1 0v-2z" />
-                                    <path fill-rule="evenodd"
-                                        d="M11.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H1.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z" />
-                                </svg>
-                                <a href="{{ folder_data.item_link }}" target="_blank">Join</a>
-                                {% endif %}
-                                {% endif %}
+                                    <!-- Course Item -->
+                                    <span class="folder-name">{{ folder_data.Courses[id].item_name }}</span>
+                                    {% if folder_data.Courses[id].item_link %}
+                                        <!-- Add an HTML anchor tag with the item_link as href -->
+                                        {% if folder_data.Courses[id].joinable %}
+                                            <!-- Joinable Course Item -->
+                                            &nbsp;&nbsp;
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                                class="bi bi-box-arrow-in-right" viewBox="0 0 16 16">
+                                                <path fill-rule="evenodd"
+                                                    d="M6 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 0-1 0v2A1.5 1.5 0 0 0 6.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-8A1.5 1.5 0 0 0 5 3.5v2a.5.5 0 0 0 1 0v-2z" />
+                                                <path fill-rule="evenodd"
+                                                    d="M11.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H1.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3z" />
+                                            </svg>
+                                            <a href="{{ folder_data.Courses[id].item_link }}" target="_blank">Join</a>
+                                        {% endif %}
+                                    {% endif %}
                                 <br />
                                 {% endfor %}
                             </li>
@@ -470,7 +454,7 @@
         <div class="container p-4">
             <div class="row">
                 <div class="col-lg-6 col-md-12 mb-4 mb-md-0">
-                    <h5 class="text-uppercase">FAU Course Notifier</h5>
+                    <h5 class="text-uppercase">StudOn Companion</h5>
                     <p>
                         Some text here to give the footer a purpose.
                     </p>
@@ -506,7 +490,7 @@
         </div>
 
         <div class="text-center p-3" style="background-color: rgba(0, 0, 0, 0.2);">
-            © 2023 FAU Course Notifier
+            © 2023 StudOn Companion
         </div>
     </footer>
 

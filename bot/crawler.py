@@ -157,7 +157,7 @@ def insert_folder(folder):
 # endregion
 # region: Crawler functions
 
-def initial_crawl(driver, url, folder_path="root//", is_demo_mode=False):
+def initial_crawl(driver, url, folder_path, is_demo_mode=False):
     '''
     Crawls the StudOn website and returns a dictionary containing all items
     - scrap the current page
