@@ -1,8 +1,7 @@
-# FAU-StudOn-Bot: Improving Course Registration for FAU Students
 
 ## Overview
 
-FAU-StudOn-Bot is a project designed to simplify and enhance the course registration process for students at Friedrich-Alexander-Universität Erlangen-Nürnberg (FAU). The platform addresses common issues with **StudOn**, the university’s course management system, by providing a web scraper and a user-friendly interface that helps students:
+This is a project designed to simplify and enhance the course registration process for students at Friedrich-Alexander-Universität Erlangen-Nürnberg (FAU). The platform addresses common issues with **StudOn**, the university’s course management system, by providing a web scraper and a user-friendly interface that helps students:
 
 - Quickly search for courses and find direct links to StudOn registration.
 - Get notifications when new courses are available or when registration opens.
