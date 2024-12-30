@@ -16,11 +16,11 @@ def login(driver):
     driver.get(url)
 
     # Wait for the page to load completely (modify the timeout as needed)
-    driver.implicitly_wait(4)
+    driver.implicitly_wait(5)
 
     element = driver.find_element(By.LINK_TEXT, "Anmelden")
     element.click()
-    time.sleep(1)
+    time.sleep(2)
 
 
     # Find the username input field and enter the username
