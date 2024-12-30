@@ -6,7 +6,7 @@ This is a project designed to simplify and enhance the course registration proce
 - Get notifications when new courses are available or when registration opens.
 - Discover courses through recommendations based on their search queries.
 
-This project originated during the **"Programming with LLMs"** course at the Pattern Recognition Lab, FAU, with a focus on leveraging AI for planning, implementation, and database design.
+This project originated during the **"SS2023 Programming with LLMs Seminar"** at the Pattern Recognition Lab.
 
 
 ## Table of Contents
